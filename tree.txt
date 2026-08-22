@@ -1,0 +1,36 @@
+AEDWAP
+├── backend
+│   ├── app
+│   │   ├── api
+│   │   │   ├── __init__.py
+│   │   │   └── vendors.py
+│   │   ├── core
+│   │   │   ├── config.py
+│   │   │   └── database.py
+│   │   ├── models
+│   │   │   ├── __init__.py
+│   │   │   └── models.py
+│   │   ├── schemas
+│   │   │   ├── __init__.py
+│   │   │   └── vendor.py
+│   │   └── main.py
+│   ├── test_db.py
+│   └── test_models.py
+├── database
+│   ├── schema.sql
+│   └── seed_data.sql
+├── docs
+│   ├── 01-problem-statement.md
+│   ├── 02-mvp-scope.md
+│   ├── 03-system-actors.md
+│   ├── 04-business-workflow.md
+│   ├── 05-system-architecture.md
+│   ├── 06-database-design.md
+│   ├── 07-invoice-state-machine.md
+│   ├── 08-demo-scenarios.md
+│   ├── 09-api-design.md
+│   └── 10-technology-stack.md
+├── .gitignore
+├── README.md
+├── requirements.txt
+└── tree.py
