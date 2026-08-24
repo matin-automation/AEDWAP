@@ -4,9 +4,9 @@ import decimal
 
 from sqlalchemy import BigInteger, CHAR, CheckConstraint, Date, DateTime, ForeignKeyConstraint, Index, Integer, Numeric, PrimaryKeyConstraint, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-class Base(DeclarativeBase):
-    pass
+from app.core.database import Base
+# class Base(DeclarativeBase):
+#     pass
 
 
 class Vendors(Base):
