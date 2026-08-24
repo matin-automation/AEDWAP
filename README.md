@@ -62,9 +62,63 @@ uvicorn app.main:app --reload
 ## 8. Check it works
 Open browser:
 ```
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8000
 ```
 Swagger UI show all endpoints, test directly there.
+
+## API Endpoints
+
+Base URL: `http://127.0.0.1:8000`
+
+### Root
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/` | health check |
+| GET | `/docs` | Swagger UI |
+
+### Vendors
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/vendors/` | list all vendors |
+| GET | `/vendors/{vendor_id}` | get vendor by id |
+
+### Purchase Orders
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/purchase-orders/` | list all purchase orders |
+| GET | `/purchase-orders/{po_id}` | get purchase order by id |
+
+### Invoices
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/invoices/` | list all invoices |
+| GET | `/invoices/{invoice_id}` | get invoice by id |
+
+### Invoice Items
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/invoice-items/` | list all invoice line items |
+| GET | `/invoice-items/{item_id}` | get invoice item by id |
+
+### Validations
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/validations/` | list all validation records |
+| GET | `/validations/{validation_id}` | get validation by id |
+
+### Workflow Tasks
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/workflow-tasks/` | list all workflow tasks |
+| GET | `/workflow-tasks/{task_id}` | get workflow task by id |
+
+### Approvals
+| Method | Endpoint | Description |
+|--------|----------|--------------|
+| GET | `/approvals/` | list all approvals |
+| GET | `/approvals/{approval_id}` | get approval by id |
+
+> Note: `audit_logs` table has no endpoints yet — read-only trail, add later if needed.
 
 ## Project structure
 ```
