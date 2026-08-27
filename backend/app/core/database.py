@@ -23,6 +23,7 @@ def get_db():
 #     pass
 
 
+<<<<<<< HEAD
 # engine = create_engine(
 #     settings.DATABASE_URL
 # )
@@ -33,3 +34,17 @@ def get_db():
 #     autoflush=False,
 #     autocommit=False
 # )
+=======
+SessionLocal = sessionmaker(
+    bind=engine,
+    autoflush=False,
+    autocommit=False
+)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+>>>>>>> 9f132266c64013c2075e8e445d55a2a65744e3e4
