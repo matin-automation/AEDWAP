@@ -1,14 +1,13 @@
 from fastapi import FastAPI
 
-from app.api.vendor_api import router as vendor_router
-from app.api.purchase_order_api import router as purchase_order_router
-from app.api.invoice_api import router as invoice_router
-from app.api.invoice_item_api import router as invoice_item_router
-from app.api.validation_api import router as validation_router
-from app.api.workflow_task_api import router as workflow_task_router
-from app.api.approval_api import router as approval_router
-from app.api.audit_log_api import router as audit_log_router
-
+from app.routers.vendor_api import router as vendor_router
+from app.routers.purchase_order_api import router as purchase_order_router
+from app.routers.invoice_api import router as invoice_router
+from app.routers.invoice_item_api import router as invoice_item_router
+from app.routers.validation_api import router as validation_router
+from app.routers.workflow_task_api import router as workflow_task_router
+from app.routers.approval_api import router as approval_router
+from app.routers.audit_log_api import router as audit_log_router
 
 app = FastAPI(
     title="AEDWAP",
