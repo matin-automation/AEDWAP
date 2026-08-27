@@ -8,6 +8,7 @@ from app.routers.validation_api import router as validation_router
 from app.routers.workflow_task_api import router as workflow_task_router
 from app.routers.approval_api import router as approval_router
 from app.routers.audit_log_api import router as audit_log_router
+from app.routers.human_review_api import router as human_review_router
 
 app = FastAPI(
     title="AEDWAP",
@@ -24,3 +25,4 @@ app.include_router(validation_router)
 app.include_router(workflow_task_router)
 app.include_router(approval_router)
 app.include_router(audit_log_router)
+app.include_router(human_review_router)
