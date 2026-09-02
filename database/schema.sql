@@ -322,3 +322,41 @@ CREATE INDEX idx_audit_logs_invoice
 
 CREATE INDEX idx_audit_logs_created_at
     ON audit_logs(created_at);
+
+-- Creating Document table
+CREATE TABLE documents (
+    id BIGSERIAL PRIMARY KEY,
+
+    file_name VARCHAR(255) NOT NULL,
+    file_path TEXT NOT NULL,
+    mime_type VARCHAR(100) NOT NULL,
+    file_size BIGINT,
+
+    document_type VARCHAR(50) NOT NULL DEFAULT 'INVOICE',
+
+    status VARCHAR(30) NOT NULL DEFAULT 'UPLOADED',
+
+    ocr_text TEXT,
+
+    extracted_data JSONB,
+
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT documents_status_check
+        CHECK (
+            status IN (
+                'UPLOADED',
+                'OCR_PROCESSING',
+                'OCR_COMPLETED',
+                'EXTRACTION_PROCESSING',
+                'EXTRACTION_COMPLETED',
+                'FAILED'
+            )
+        )
+);
+CREATE INDEX idx_documents_status
+ON documents(status);
+
+CREATE INDEX idx_documents_document_type
+ON documents(document_type);

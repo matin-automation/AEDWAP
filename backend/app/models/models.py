@@ -5,6 +5,7 @@ import decimal
 from sqlalchemy import BigInteger, CHAR, CheckConstraint, Date, DateTime, ForeignKeyConstraint, Index, Integer, Numeric, PrimaryKeyConstraint, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from app.core.database import Base
+from sqlalchemy.dialects.postgresql import JSONB
 # class Base(DeclarativeBase):
 #     pass
 
@@ -24,7 +25,7 @@ class Vendors(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime(True), nullable=False, server_default=text('CURRENT_TIMESTAMP'))
     gst_number: Mapped[Optional[str]] = mapped_column(String(15))
     email: Mapped[Optional[str]] = mapped_column(String(255))
-    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    phone: Mapped[Optional[str]] = mapped_column(String(20),unique=True,nullable=False)
     address: Mapped[Optional[str]] = mapped_column(Text)
 
     purchase_orders: Mapped[list['PurchaseOrders']] = relationship('PurchaseOrders', back_populates='vendor')
@@ -212,3 +213,82 @@ class Approvals(Base):
     comment: Mapped[Optional[str]] = mapped_column(Text)
 
     task: Mapped['WorkflowTasks'] = relationship('WorkflowTasks', back_populates='approvals')
+
+
+class Documents(Base):
+    __tablename__ = "documents"
+
+    __table_args__ = (
+        CheckConstraint(
+            "status::text = ANY (ARRAY["
+            "'UPLOADED'::character varying, "
+            "'OCR_PROCESSING'::character varying, "
+            "'OCR_COMPLETED'::character varying, "
+            "'EXTRACTION_PROCESSING'::character varying, "
+            "'EXTRACTION_COMPLETED'::character varying, "
+            "'FAILED'::character varying"
+            "]::text[])",
+            name="documents_status_check",
+        ),
+        PrimaryKeyConstraint("id", name="documents_pkey"),
+        Index("idx_documents_status", "status"),
+        Index("idx_documents_document_type", "document_type"),
+    )
+
+    id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+        autoincrement=True,
+    )
+
+    file_name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
+
+    file_path: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+    )
+
+    mime_type: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
+
+    file_size: Mapped[Optional[int]] = mapped_column(
+        BigInteger,
+    )
+
+    document_type: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        server_default=text("'INVOICE'::character varying"),
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        server_default=text("'UPLOADED'::character varying"),
+    )
+
+    ocr_text: Mapped[Optional[str]] = mapped_column(
+        Text,
+    )
+
+    extracted_data: Mapped[Optional[dict]] = mapped_column(
+        JSONB,
+    )
+
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(True),
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
+    )
+

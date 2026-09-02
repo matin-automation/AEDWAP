@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.models import (
@@ -10,6 +11,10 @@ from app.models.models import (
 
 from app.services.audit_service import create_audit_log
 
+
+# =========================================================
+# APPROVE WORKFLOW TASK
+# =========================================================
 
 def approve_workflow_task(
     db: Session,
@@ -38,18 +43,23 @@ def approve_workflow_task(
     )
 
     if task is None:
-        return {
-            "error": "Workflow task not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Workflow task not found."
+        )
 
     # ---------------------------------------------------------
     # 2. Check task status
     # ---------------------------------------------------------
 
     if task.status != "PENDING":
-        return {
-            "error": f"Task cannot be approved because its current status is {task.status}."
-        }
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Task cannot be approved because its "
+                f"current status is {task.status}."
+            )
+        )
 
     # ---------------------------------------------------------
     # 3. Find invoice
@@ -62,9 +72,10 @@ def approve_workflow_task(
     )
 
     if invoice is None:
-        return {
-            "error": "Invoice not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found."
+        )
 
     # ---------------------------------------------------------
     # 4. Store old invoice status
@@ -72,71 +83,86 @@ def approve_workflow_task(
 
     old_invoice_status = invoice.status
 
-    # ---------------------------------------------------------
-    # 5. Update invoice
-    # ---------------------------------------------------------
+    try:
 
-    invoice.status = "APPROVED"
+        # -----------------------------------------------------
+        # 5. Update invoice
+        # -----------------------------------------------------
 
-    # ---------------------------------------------------------
-    # 6. Complete workflow task
-    # ---------------------------------------------------------
+        invoice.status = "APPROVED"
 
-    task.status = "COMPLETED"
-    task.completed_at = datetime.now(timezone.utc)
+        # -----------------------------------------------------
+        # 6. Complete workflow task
+        # -----------------------------------------------------
 
-    # ---------------------------------------------------------
-    # 7. Create approval record
-    # ---------------------------------------------------------
+        task.status = "COMPLETED"
+        task.completed_at = datetime.now(timezone.utc)
 
-    approval = Approvals(
-        task_id=task.id,
-        decision="APPROVED",
-        approved_by=approved_by,
-        comment=comment,
-    )
+        # -----------------------------------------------------
+        # 7. Create approval record
+        # -----------------------------------------------------
 
-    db.add(approval)
+        approval = Approvals(
+            task_id=task.id,
+            decision="APPROVED",
+            approved_by=approved_by,
+            comment=comment,
+        )
 
-    # ---------------------------------------------------------
-    # 8. Create audit log
-    # ---------------------------------------------------------
+        db.add(approval)
 
-    create_audit_log(
-        db=db,
-        invoice_id=invoice.id,
-        action="INVOICE_APPROVED",
-        actor_type="USER",
-        actor_id=approved_by,
-        old_value=old_invoice_status,
-        new_value="APPROVED",
-        details=comment or "Invoice approved by human reviewer.",
-    )
+        # -----------------------------------------------------
+        # 8. Create audit log
+        # -----------------------------------------------------
 
-    # ---------------------------------------------------------
-    # 9. Commit everything together
-    # ---------------------------------------------------------
+        create_audit_log(
+            db=db,
+            invoice_id=invoice.id,
+            action="INVOICE_APPROVED",
+            actor_type="USER",
+            actor_id=approved_by,
+            old_value=old_invoice_status,
+            new_value="APPROVED",
+            details=comment
+            or "Invoice approved by human reviewer.",
+        )
 
-    db.commit()
+        # -----------------------------------------------------
+        # 9. Commit everything together
+        # -----------------------------------------------------
 
-    db.refresh(invoice)
-    db.refresh(task)
-    db.refresh(approval)
+        db.commit()
 
-    return {
-        "message": "Invoice approved successfully.",
-        "invoice_id": invoice.id,
-        "task_id": task.id,
-        "invoice_status": invoice.status,
-        "task_status": task.status,
-        "decision": approval.decision,
-    }
+        # -----------------------------------------------------
+        # 10. Refresh objects
+        # -----------------------------------------------------
 
+        db.refresh(invoice)
+        db.refresh(task)
+        db.refresh(approval)
+
+        return {
+            "message": "Invoice approved successfully.",
+            "invoice_id": invoice.id,
+            "task_id": task.id,
+            "invoice_status": invoice.status,
+            "task_status": task.status,
+            "decision": approval.decision,
+        }
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+# =========================================================
+# REJECT WORKFLOW TASK
+# =========================================================
 
 def reject_workflow_task(
     db: Session,
     task_id: int,
-    approved_by: int | None = None,
+    rejected_by: int | None = None,
     comment: str | None = None,
 ):
     """
@@ -160,18 +186,23 @@ def reject_workflow_task(
     )
 
     if task is None:
-        return {
-            "error": "Workflow task not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Workflow task not found."
+        )
 
     # ---------------------------------------------------------
     # 2. Check task status
     # ---------------------------------------------------------
 
     if task.status != "PENDING":
-        return {
-            "error": f"Task cannot be rejected because its current status is {task.status}."
-        }
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Task cannot be rejected because its "
+                f"current status is {task.status}."
+            )
+        )
 
     # ---------------------------------------------------------
     # 3. Find invoice
@@ -184,72 +215,85 @@ def reject_workflow_task(
     )
 
     if invoice is None:
-        return {
-            "error": "Invoice not found."
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Invoice not found."
+        )
 
     # ---------------------------------------------------------
-    # 4. Store old status
+    # 4. Store old invoice status
     # ---------------------------------------------------------
 
     old_invoice_status = invoice.status
 
-    # ---------------------------------------------------------
-    # 5. Update invoice
-    # ---------------------------------------------------------
+    try:
 
-    invoice.status = "REJECTED"
+        # -----------------------------------------------------
+        # 5. Update invoice
+        # -----------------------------------------------------
 
-    # ---------------------------------------------------------
-    # 6. Update workflow task
-    # ---------------------------------------------------------
+        invoice.status = "REJECTED"
 
-    task.status = "REJECTED"
-    task.completed_at = datetime.now(timezone.utc)
+        # -----------------------------------------------------
+        # 6. Update workflow task
+        # -----------------------------------------------------
 
-    # ---------------------------------------------------------
-    # 7. Create approval/rejection record
-    # ---------------------------------------------------------
+        task.status = "REJECTED"
+        task.completed_at = datetime.now(timezone.utc)
 
-    approval = Approvals(
-        task_id=task.id,
-        decision="REJECTED",
-        approved_by=approved_by,
-        comment=comment,
-    )
+        # -----------------------------------------------------
+        # 7. Create approval/rejection record
+        # -----------------------------------------------------
 
-    db.add(approval)
+        approval = Approvals(
+            task_id=task.id,
+            decision="REJECTED",
+            approved_by=rejected_by,
+            comment=comment,
+        )
 
-    # ---------------------------------------------------------
-    # 8. Create audit log
-    # ---------------------------------------------------------
+        db.add(approval)
 
-    create_audit_log(
-        db=db,
-        invoice_id=invoice.id,
-        action="INVOICE_REJECTED",
-        actor_type="USER",
-        actor_id=approved_by,
-        old_value=old_invoice_status,
-        new_value="REJECTED",
-        details=comment or "Invoice rejected by human reviewer.",
-    )
+        # -----------------------------------------------------
+        # 8. Create audit log
+        # -----------------------------------------------------
 
-    # ---------------------------------------------------------
-    # 9. Commit everything
-    # ---------------------------------------------------------
+        create_audit_log(
+            db=db,
+            invoice_id=invoice.id,
+            action="INVOICE_REJECTED",
+            actor_type="USER",
+            actor_id=rejected_by,
+            old_value=old_invoice_status,
+            new_value="REJECTED",
+            details=comment
+            or "Invoice rejected by human reviewer.",
+        )
 
-    db.commit()
+        # -----------------------------------------------------
+        # 9. Commit everything together
+        # -----------------------------------------------------
 
-    db.refresh(invoice)
-    db.refresh(task)
-    db.refresh(approval)
+        db.commit()
 
-    return {
-        "message": "Invoice rejected successfully.",
-        "invoice_id": invoice.id,
-        "task_id": task.id,
-        "invoice_status": invoice.status,
-        "task_status": task.status,
-        "decision": approval.decision,
-    }
+        # -----------------------------------------------------
+        # 10. Refresh objects
+        # -----------------------------------------------------
+
+        db.refresh(invoice)
+        db.refresh(task)
+        db.refresh(approval)
+
+        return {
+            "message": "Invoice rejected successfully.",
+            "invoice_id": invoice.id,
+            "task_id": task.id,
+            "invoice_status": invoice.status,
+            "task_status": task.status,
+            "decision": approval.decision,
+        }
+
+    except Exception:
+        db.rollback()
+        raise
+
