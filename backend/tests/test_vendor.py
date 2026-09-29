@@ -1,7 +1,7 @@
 def test_create_vendor(client):
     payload = {
         "name": "Test Automation Vendor",
-        "gst_number": "27TESTAUTO001",
+        "gst_number": "27TESTAUTO002",
         "email": "testautomation@example.com",
         "phone": "9999990001",
         "address": "Pune, Maharashtra"
@@ -18,3 +18,4 @@ def test_create_vendor(client):
     assert data["email"] == payload["email"]
     assert data["phone"] == payload["phone"]
     assert data["address"] == payload["address"]
+    
